@@ -16,12 +16,12 @@ INSERT INTO statuses(status) VALUES
 
 CREATE TABLE IF NOT EXISTS applications (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  company TEXT,
-  position_title TEXT,
+  company TEXT NOT NULL,
+  position TEXT NOT NULL,
   location TEXT,
   date_posted TEXT,
   date_applied TEXT,
   url TEXT,
   notes TEXT,
-  status INTEGER REFERENCES statuses(id)
+  status INTEGER REFERENCES statuses(id) NOT NULL
 );
