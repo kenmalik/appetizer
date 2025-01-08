@@ -9,16 +9,17 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/kenmalik/appetizer/database"
+	"github.com/kenmalik/appetizer/types"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type model struct {
 	msg          string
-	applications []database.Application
+	applications []types.Application
 }
 
-func initialModel(applications []database.Application) model {
+func initialModel(applications []types.Application) model {
 	return model{
 		msg:          "Hello, World!",
 		applications: applications,
