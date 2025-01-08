@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+SOURCE_DIR="./"
+
+WATCH_PATTERN=".*\.go" 
+
+build_and_run() {
+  echo "Rebuilding and running..."
+  if go build -o appetizer; then
+    echo "Build successful. Running..."
+    ./appetizer
+    echo -e "Program finished with exit code $?"
+  else
+    echo "Build failed."
+  fi
+}
+
+build_and_run
+
+fswatch -o -i $WATCH_PATTERN -e ".*" $SOURCE_DIR | while read; do
+  build_and_run 
+done
