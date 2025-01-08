@@ -25,6 +25,8 @@ type ReadApplication struct {
 
 func NewApplication(ra ReadApplication) Application {
 	var application Application
+	application.Company = ra.Company
+	application.Position = ra.Position
 	application.Status = ra.Status
 
 	if ra.Location == nil {
