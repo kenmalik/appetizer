@@ -7,51 +7,53 @@ import (
 	"log"
 	"os"
 
+	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/kenmalik/appetizer/database"
 	"github.com/kenmalik/appetizer/types"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
+var windowStyles = lipgloss.NewStyle().Padding(8, 16)
+
 type model struct {
-	msg          string
-	applications []types.Application
+	msg   string
+	table table.Model
 }
 
-func initialModel(applications []types.Application) model {
+func initialModel(t table.Model) model {
 	return model{
-		msg:          "Hello, World!",
-		applications: applications,
+		msg:   "Hello, World!",
+		table: t,
 	}
 }
 
 func (m model) Init() tea.Cmd {
-	return nil
+	return tea.EnterAltScreen
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
+		case "enter":
+			return m, tea.Batch(
+				tea.Printf("Go to %s\n", m.table.SelectedRow()[1]),
+			)
 		}
 	}
 
-	return m, nil
+	m.table, cmd = m.table.Update(msg)
+	return m, cmd
 }
 
 func (m model) View() string {
-	s := fmt.Sprintf("%s\n\n", m.msg)
-
-	for _, application := range m.applications {
-		s += fmt.Sprintf("%v\n", application)
-	}
-
-	s += "\nPress q to quit\n"
-
-	return s
+	return windowStyles.Render(m.table.View() + "\n " + m.table.HelpView() + "\n q to quit\n")
 }
 
 type Env struct {
@@ -91,28 +93,55 @@ func main() {
 		}
 	}
 
-	err = env.applications.InsertApplication(types.Application{
-		Company:     "Some Company",
-		Position:    "A position",
-		Location:    "What location",
-		DatePosted:  "A date",
-		DateApplied: "A date",
-		Url:         "fdsaf.432.edu",
-		Notes:       "Funny funny yummy",
-		Status:      "Rejected",
-	})
-  if err != nil {
-    log.Fatalf("Error inserting application - %v", err)
-  }
-
 	applications, err := env.applications.All()
 	if err != nil {
 		log.Fatalf("Error getting applications - %v", err)
 	}
 
-	p := tea.NewProgram(initialModel(applications))
+	var tableRows []table.Row
+	for _, application := range applications {
+		tableRows = append(tableRows, TableRow(application))
+	}
+
+	columns := []table.Column{
+		{Title: "Company", Width: 12},
+		{Title: "Position", Width: 20},
+		{Title: "Location", Width: 16},
+		{Title: "Posted", Width: 10},
+		{Title: "Applied", Width: 10},
+		{Title: "Url", Width: 16},
+		{Title: "Notes", Width: 16},
+		{Title: "Status", Width: 14},
+	}
+
+	style := table.DefaultStyles()
+	style.Selected = style.Selected.
+		Foreground(lipgloss.Color("#f5a142"))
+
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithRows(tableRows),
+		table.WithFocused(true),
+		table.WithHeight(20),
+		table.WithStyles(style),
+	)
+
+	p := tea.NewProgram(initialModel(t))
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error running program %v", err)
 		os.Exit(1)
+	}
+}
+
+func TableRow(a types.Application) table.Row {
+	return table.Row{
+		a.Company,
+		a.Position,
+		a.Location,
+		a.DatePosted,
+		a.DateApplied,
+		a.Url,
+		a.Notes,
+		a.Status,
 	}
 }

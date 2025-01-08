@@ -48,12 +48,12 @@ func (m ApplicationModel) All() ([]types.Application, error) {
 }
 
 func (m ApplicationModel) InsertApplication(application types.Application) error {
-  row := m.DB.QueryRow("SELECT id FROM statuses WHERE status = ?", application.Status)
-  var statusId int
-  err := row.Scan(&statusId)
-  if err != nil {
-    return fmt.Errorf("Error scanning status id in row - %v", err)
-  }
+	row := m.DB.QueryRow("SELECT id FROM statuses WHERE status = ?", application.Status)
+	var statusId int
+	err := row.Scan(&statusId)
+	if err != nil {
+		return fmt.Errorf("Error scanning status id in row - %v", err)
+	}
 
 	_, err = m.DB.Exec(`INSERT INTO applications(company, position, location, date_posted, date_applied, url, notes, status_id)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,

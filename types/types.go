@@ -57,4 +57,3 @@ func NewApplication(ra ReadApplication) Application {
 
 	return application
 }
-
