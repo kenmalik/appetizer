@@ -1,29 +1,31 @@
 package database
 
-import "database/sql"
+import (
+	"database/sql"
+	"fmt"
+)
 
 type Application struct {
-	Id            int
-	Company       string
-	PositionTitle string
-	Location      string
-	DatePosted    string
-	DateApplied   string
-	Url           string
-	Notes         string
-	Status        int
+	Company     string
+	Position    string
+	Location    string
+	DatePosted  string
+	DateApplied string
+	Url         string
+	Notes       string
+	Status      string
 }
 
 type ReadApplication struct {
-	Id            int
-	Company       string
-	PositionTitle string
-	Location      *string
-	DatePosted    *string
-	DateApplied   *string
-	Url           *string
-	Notes         *string
-	Status        int
+	Id          int
+	Company     string
+	Position    string
+	Location    *string
+	DatePosted  *string
+	DateApplied *string
+	Url         *string
+	Notes       *string
+	Status      string
 }
 
 type ApplicationModel struct {
@@ -32,43 +34,42 @@ type ApplicationModel struct {
 
 func newApplication(ra ReadApplication) Application {
 	var application Application
-	application.Id = ra.Id
 	application.Status = ra.Status
 
 	if ra.Location == nil {
 		application.Location = ""
 	} else {
 		application.Location = *ra.Location
-  }
+	}
 	if ra.DatePosted == nil {
 		application.DatePosted = ""
 	} else {
 		application.DatePosted = *ra.DatePosted
-  }
+	}
 	if ra.DateApplied == nil {
 		application.DateApplied = ""
 	} else {
 		application.DateApplied = *ra.DateApplied
-  }
+	}
 	if ra.Url == nil {
 		application.Url = ""
 	} else {
 		application.Url = *ra.Url
-  }
+	}
 	if ra.Notes == nil {
 		application.Notes = ""
 	} else {
 		application.Notes = *ra.Notes
-  }
+	}
 
 	return application
 }
 
 func (m ApplicationModel) All() ([]Application, error) {
-	rows, err := m.DB.Query("SELECT * FROM applications")
+	rows, err := m.DB.Query("SELECT company, position, location, date_posted, date_applied, url, notes, status FROM applications LEFT JOIN statuses ON applications.status_id = statuses.id")
 	if err != nil {
-		return nil, err
-	}
+		return nil, fmt.Errorf("Error querying database - %v", err)
+  }
 	defer rows.Close()
 
 	var applications []Application
@@ -76,9 +77,8 @@ func (m ApplicationModel) All() ([]Application, error) {
 	for rows.Next() {
 		var application ReadApplication
 		err = rows.Scan(
-			&application.Id,
 			&application.Company,
-			&application.PositionTitle,
+			&application.Position,
 			&application.Location,
 			&application.DatePosted,
 			&application.DateApplied,
@@ -87,7 +87,7 @@ func (m ApplicationModel) All() ([]Application, error) {
 			&application.Status,
 		)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Error scanning row - %v", err)
 		}
 
 		applications = append(applications, newApplication(application))

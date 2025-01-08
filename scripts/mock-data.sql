@@ -1,4 +1,4 @@
-INSERT INTO applications (id, company, position, location, date_posted, date_applied, url, notes, status) VALUES
+INSERT INTO applications (id, company, position, location, date_posted, date_applied, url, notes, status_id) VALUES
   (1, 'Google', 'Software Engineer', 'Mountain View', '2024-12-01', '2024-12-05', 'https://careers.google.com/job1', 'Excited to apply!', 1),
   (2, 'Microsoft', 'Data Analyst', 'Seattle', '2024-11-15', '2024-11-20', 'https://careers.microsoft.com/job2', 'Waiting for recruiter response.', 2),
   (3, 'Amazon', 'Cloud Engineer', 'New York', '2024-12-10', '2024-12-12', 'https://amazon.jobs/job3', 'Completed initial coding test.', 3),

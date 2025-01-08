@@ -23,5 +23,5 @@ CREATE TABLE IF NOT EXISTS applications (
   date_applied TEXT,
   url TEXT,
   notes TEXT,
-  status INTEGER REFERENCES statuses(id) NOT NULL
+  status_id INTEGER REFERENCES statuses(id) NOT NULL
 );
