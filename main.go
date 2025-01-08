@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -13,67 +14,90 @@ import (
 )
 
 type model struct {
-  msg string
-  applications []database.Application
+	msg          string
+	applications []database.Application
 }
 
 func initialModel(applications []database.Application) model {
-  return model{
-    msg: "Hello, World!",
-    applications: applications,
-  }
+	return model{
+		msg:          "Hello, World!",
+		applications: applications,
+	}
 }
 
 func (m model) Init() tea.Cmd {
-  return nil
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-  switch msg := msg.(type) {
-  case tea.KeyMsg:
-    switch msg.String() {
-    case "ctrl+c", "q":
-      return m, tea.Quit
-    }
-  }
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+c", "q":
+			return m, tea.Quit
+		}
+	}
 
-  return m, nil
+	return m, nil
 }
 
 func (m model) View() string {
-  s := fmt.Sprintf("%s\n\n", m.msg)
+	s := fmt.Sprintf("%s\n\n", m.msg)
 
-  for _, application := range m.applications {
-    s += fmt.Sprintf("%v\n", application)
-  }
+	for _, application := range m.applications {
+		s += fmt.Sprintf("%v\n", application)
+	}
 
-  s += "\nPress q to quit\n"
+	s += "\nPress q to quit\n"
 
-  return s
+	return s
 }
 
 type Env struct {
-  applications database.ApplicationModel
+	applications database.ApplicationModel
 }
 
 func main() {
-  db, err := sql.Open("sqlite3", "data.db")
-  if err != nil {
-    log.Fatalf("Error connecting to database - %v", err)
-  }
+	initRequired := false
 
-  env := Env{
-    applications: database.ApplicationModel{DB: db},
-  }
+	_, err := os.Stat("data.db")
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			initRequired = true
+		} else {
+			log.Fatalf("Error checking database file status - %v", err)
+		}
+	}
 
-  applications, err := env.applications.All()
-  if err != nil {
-    log.Fatalf("Error getting applications - %v", err)
-  }
+	db, err := sql.Open("sqlite3", "data.db")
+	if err != nil {
+		log.Fatalf("Error connecting to database - %v", err)
+	}
+	env := Env{
+		applications: database.ApplicationModel{DB: db},
+	}
 
-  p := tea.NewProgram(initialModel(applications))
-  if _, err := p.Run(); err != nil {
-    fmt.Printf("Error running program %v", err)
-    os.Exit(1)
-  }
+	if initRequired {
+		log.Println("No database file found. Initializing...")
+		init, err := os.ReadFile("./scripts/init.sql")
+		if err != nil {
+			log.Fatalf("Error opening database init script - %v", err)
+		}
+
+		_, err = env.applications.DB.Exec(string(init))
+		if err != nil {
+			log.Fatalf("Error running database init script - %v", err)
+		}
+	}
+
+	applications, err := env.applications.All()
+	if err != nil {
+		log.Fatalf("Error getting applications - %v", err)
+	}
+
+	p := tea.NewProgram(initialModel(applications))
+	if _, err := p.Run(); err != nil {
+		fmt.Printf("Error running program %v", err)
+		os.Exit(1)
+	}
 }
