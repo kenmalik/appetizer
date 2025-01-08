@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS statuses (
 INSERT INTO statuses(status) VALUES
   ("Did not apply"),
   ("Applied"),
-  ("Response received"),
+  ("Rejected"),
   ("Interviewed"),
   ("Offered"),
   ("Offer accepted");
