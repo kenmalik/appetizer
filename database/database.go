@@ -66,10 +66,12 @@ func newApplication(ra ReadApplication) Application {
 }
 
 func (m ApplicationModel) All() ([]Application, error) {
-	rows, err := m.DB.Query("SELECT company, position, location, date_posted, date_applied, url, notes, status FROM applications LEFT JOIN statuses ON applications.status_id = statuses.id")
+	rows, err := m.DB.Query(`SELECT company, position, location, date_posted, date_applied, url, notes, status 
+  FROM applications LEFT JOIN statuses
+  ON applications.status_id = statuses.id`)
 	if err != nil {
 		return nil, fmt.Errorf("Error querying database - %v", err)
-  }
+	}
 	defer rows.Close()
 
 	var applications []Application
