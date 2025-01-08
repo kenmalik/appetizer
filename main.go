@@ -16,11 +16,11 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var windowStyles = lipgloss.NewStyle().Padding(8, 16)
-
 type model struct {
 	msg   string
 	table table.Model
+  width int
+  height int
 }
 
 func initialModel(t table.Model) model {
@@ -37,6 +37,9 @@ func (m model) Init() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
+  case tea.WindowSizeMsg:
+    m.width = msg.Width
+    m.height = msg.Height
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
@@ -53,7 +56,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return windowStyles.Render(m.table.View() + "\n " + m.table.HelpView() + "\n q to quit\n")
+  table := m.table.View() + "\n " + m.table.HelpView() + "\n q to quit\n"
+  return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, table)
 }
 
 type Env struct {
