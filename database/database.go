@@ -3,8 +3,8 @@ package database
 import (
 	"database/sql"
 	"fmt"
-  
-  "github.com/kenmalik/appetizer/types"
+
+	"github.com/kenmalik/appetizer/types"
 )
 
 type ApplicationModel struct {
@@ -45,4 +45,23 @@ func (m ApplicationModel) All() ([]types.Application, error) {
 	}
 
 	return applications, nil
+}
+
+func (m ApplicationModel) InsertApplication(application types.Application) error {
+  row := m.DB.QueryRow("SELECT id FROM statuses WHERE status = ?", application.Status)
+  var statusId int
+  err := row.Scan(&statusId)
+  if err != nil {
+    return fmt.Errorf("Error scanning status id in row - %v", err)
+  }
+
+	_, err = m.DB.Exec(`INSERT INTO applications(company, position, location, date_posted, date_applied, url, notes, status_id)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		application.Company, application.Position, application.Location, application.DatePosted,
+		application.DateApplied, application.Url, application.Notes, statusId)
+	if err != nil {
+		return fmt.Errorf("Error inserting application - %v", err)
+	}
+
+	return nil
 }

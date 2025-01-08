@@ -91,6 +91,20 @@ func main() {
 		}
 	}
 
+	err = env.applications.InsertApplication(types.Application{
+		Company:     "Some Company",
+		Position:    "A position",
+		Location:    "What location",
+		DatePosted:  "A date",
+		DateApplied: "A date",
+		Url:         "fdsaf.432.edu",
+		Notes:       "Funny funny yummy",
+		Status:      "Rejected",
+	})
+  if err != nil {
+    log.Fatalf("Error inserting application - %v", err)
+  }
+
 	applications, err := env.applications.All()
 	if err != nil {
 		log.Fatalf("Error getting applications - %v", err)
