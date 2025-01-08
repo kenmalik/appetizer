@@ -16,43 +16,52 @@ type Application struct {
 
 type ReadApplication struct {
 	Id            int
-	Company       *string
-	PositionTitle *string
+	Company       string
+	PositionTitle string
 	Location      *string
 	DatePosted    *string
 	DateApplied   *string
 	Url           *string
 	Notes         *string
-	Status        *int
+	Status        int
 }
 
 type ApplicationModel struct {
-  DB *sql.DB
+	DB *sql.DB
 }
 
 func newApplication(ra ReadApplication) Application {
 	var application Application
-  application.Id = ra.Id
+	application.Id = ra.Id
+	application.Status = ra.Status
 
-	if ra.Company == nil {
-		application.Company = ""
-	} else if ra.PositionTitle == nil {
-		application.PositionTitle = ""
-	} else if ra.Location == nil {
+	if ra.Location == nil {
 		application.Location = ""
-	} else if ra.DatePosted == nil {
+	} else {
+		application.Location = *ra.Location
+  }
+	if ra.DatePosted == nil {
 		application.DatePosted = ""
-	} else if ra.DateApplied == nil {
+	} else {
+		application.DatePosted = *ra.DatePosted
+  }
+	if ra.DateApplied == nil {
 		application.DateApplied = ""
-	} else if ra.Url == nil {
+	} else {
+		application.DateApplied = *ra.DateApplied
+  }
+	if ra.Url == nil {
 		application.Url = ""
-	} else if ra.Notes == nil {
+	} else {
+		application.Url = *ra.Url
+  }
+	if ra.Notes == nil {
 		application.Notes = ""
-	} else if ra.Status == nil {
-		application.Status = 0
-	}
+	} else {
+		application.Notes = *ra.Notes
+  }
 
-  return application
+	return application
 }
 
 func (m ApplicationModel) All() ([]Application, error) {
