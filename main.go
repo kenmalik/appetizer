@@ -12,19 +12,20 @@ import (
 	"github.com/kenmalik/appetizer/database"
 	"github.com/kenmalik/appetizer/list"
 	"github.com/kenmalik/appetizer/types"
+	"github.com/kenmalik/appetizer/view"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type model struct {
-  view list.Model
+  view view.View
   width int
   height int
 }
 
-func initialModel(application []types.Application) tea.Model {
+func initialModel(applications []types.Application) tea.Model {
   return model{
-    view: list.New(application),
+    view: list.New(applications),
   }
 }
 

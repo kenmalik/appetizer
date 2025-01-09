@@ -5,6 +5,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/kenmalik/appetizer/types"
+	"github.com/kenmalik/appetizer/view"
 )
 
 type Model struct {
@@ -49,7 +50,7 @@ func (m Model) View() string {
 	return m.Table.View() + "\n " + m.Table.HelpView() + "\n q to quit\n"
 }
 
-func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (view.View, tea.Cmd) {
 	var cmd tea.Cmd
 	m.Table, cmd = m.Table.Update(msg)
 	return m, cmd
