@@ -30,7 +30,7 @@ func initialModel(applications []types.Application) tea.Model {
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.EnterAltScreen
+	return nil
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -96,7 +96,7 @@ func main() {
 		log.Fatalf("Error getting applications - %v", err)
 	}
 
-	p := tea.NewProgram(initialModel(applications))
+	p := tea.NewProgram(initialModel(applications), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error running program %v", err)
 		os.Exit(1)
