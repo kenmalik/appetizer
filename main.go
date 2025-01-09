@@ -10,48 +10,80 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/kenmalik/appetizer/database"
+	"github.com/kenmalik/appetizer/info"
 	"github.com/kenmalik/appetizer/list"
 	"github.com/kenmalik/appetizer/types"
-	"github.com/kenmalik/appetizer/view"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type model struct {
-  view view.View
-  width int
-  height int
+type sessionState uint
+
+const (
+	listView sessionState = iota
+	infoView
+)
+
+type mainModel struct {
+	state  sessionState
+	list   tea.Model
+	info   tea.Model
+	width  int
+	height int
 }
 
 func initialModel(applications []types.Application) tea.Model {
-  return model{
-    view: list.New(applications),
-  }
+	return mainModel{
+		state: listView,
+		list:  list.New(applications),
+	}
 }
 
-func (m model) Init() tea.Cmd {
+func (m mainModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
+	var cmds []tea.Cmd
 	switch msg := msg.(type) {
-  case tea.WindowSizeMsg:
-    m.width = msg.Width
-    m.height = msg.Height
+	case list.SelectMsg:
+		m.info = info.New(types.Application(msg))
+		m.state = infoView
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
+		case "esc":
+			m.state = listView
+		}
+		switch m.state {
+		case listView:
+			m.list, cmd = m.list.Update(msg)
+			cmds = append(cmds, cmd)
+		case infoView:
+			m.info, cmd = m.info.Update(msg)
+			cmds = append(cmds, cmd)
 		}
 	}
-  m.view, cmd = m.view.Update(msg)
-	return m, cmd
+	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() string {
-  page := m.view.View()
-  return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, page)
+func (m mainModel) View() string {
+	var page string
+	switch m.state {
+	case listView:
+		page = m.list.View()
+	case infoView:
+		page = m.info.View()
+	default:
+		page = "No page open???"
+	}
+
+	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, page)
 }
 
 type Env struct {

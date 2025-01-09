@@ -5,7 +5,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/kenmalik/appetizer/types"
-	"github.com/kenmalik/appetizer/view"
 )
 
 type Model struct {
@@ -46,17 +45,37 @@ func New(applications []types.Application) Model {
 	}
 }
 
+func (m Model) Init() tea.Cmd {
+	return nil
+}
+
 func (m Model) View() string {
 	return m.Table.View() + "\n " + m.Table.HelpView() + "\n q to quit\n"
 }
 
-func (m Model) Update(msg tea.Msg) (view.View, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
+	var cmds []tea.Cmd
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "enter":
+			cmds = append(cmds, selectCmd(Application(m.Table.SelectedRow())))
+		}
+	}
+
 	m.Table, cmd = m.Table.Update(msg)
-	return m, cmd
+	cmds = append(cmds, cmd)
+	return m, tea.Batch(cmds...)
 }
 
-type applicationMsg types.Application
+type SelectMsg types.Application
+
+func selectCmd(application types.Application) tea.Cmd {
+	return func() tea.Msg {
+		return SelectMsg(application)
+	}
+}
 
 func TableRow(a types.Application) table.Row {
 	return table.Row{
