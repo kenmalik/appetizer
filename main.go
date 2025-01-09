@@ -7,53 +7,83 @@ import (
 	"log"
 	"os"
 
-	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/kenmalik/appetizer/database"
+	"github.com/kenmalik/appetizer/info"
+	"github.com/kenmalik/appetizer/list"
 	"github.com/kenmalik/appetizer/types"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var windowStyles = lipgloss.NewStyle().Padding(8, 16)
+type sessionState uint
 
-type model struct {
-	msg   string
-	table table.Model
+const (
+	listView sessionState = iota
+	infoView
+)
+
+type mainModel struct {
+	state  sessionState
+	list   tea.Model
+	info   tea.Model
+	width  int
+	height int
 }
 
-func initialModel(t table.Model) model {
-	return model{
-		msg:   "Hello, World!",
-		table: t,
+func initialModel(applications []types.Application) tea.Model {
+	return mainModel{
+		state: listView,
+		list:  list.New(applications),
 	}
 }
 
-func (m model) Init() tea.Cmd {
-	return tea.EnterAltScreen
+func (m mainModel) Init() tea.Cmd {
+	return nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
+	var cmds []tea.Cmd
 	switch msg := msg.(type) {
+	case list.SelectMsg:
+		m.info = info.New(types.Application(msg))
+		m.state = infoView
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
-		case "enter":
-			return m, tea.Batch(
-				tea.Printf("Go to %s\n", m.table.SelectedRow()[1]),
-			)
+		case "esc", "-":
+			m.state = listView
+		}
+		switch m.state {
+		case listView:
+			m.list, cmd = m.list.Update(msg)
+			cmds = append(cmds, cmd)
+		case infoView:
+			m.info, cmd = m.info.Update(msg)
+			cmds = append(cmds, cmd)
 		}
 	}
-
-	m.table, cmd = m.table.Update(msg)
-	return m, cmd
+	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() string {
-	return windowStyles.Render(m.table.View() + "\n " + m.table.HelpView() + "\n q to quit\n")
+func (m mainModel) View() string {
+	var page string
+	switch m.state {
+	case listView:
+		page = m.list.View()
+	case infoView:
+		page = m.info.View()
+	default:
+		page = "No page open???"
+	}
+
+	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, page)
 }
 
 type Env struct {
@@ -98,50 +128,9 @@ func main() {
 		log.Fatalf("Error getting applications - %v", err)
 	}
 
-	var tableRows []table.Row
-	for _, application := range applications {
-		tableRows = append(tableRows, TableRow(application))
-	}
-
-	columns := []table.Column{
-		{Title: "Company", Width: 12},
-		{Title: "Position", Width: 20},
-		{Title: "Location", Width: 16},
-		{Title: "Posted", Width: 10},
-		{Title: "Applied", Width: 10},
-		{Title: "Url", Width: 16},
-		{Title: "Notes", Width: 16},
-		{Title: "Status", Width: 14},
-	}
-
-	style := table.DefaultStyles()
-	style.Selected = style.Selected.
-		Foreground(lipgloss.Color("#f5a142"))
-
-	t := table.New(
-		table.WithColumns(columns),
-		table.WithRows(tableRows),
-		table.WithFocused(true),
-		table.WithHeight(20),
-		table.WithStyles(style),
-	)
-
-	p := tea.NewProgram(initialModel(t))
+	p := tea.NewProgram(initialModel(applications), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error running program %v", err)
 		os.Exit(1)
-	}
-}
-
-func TableRow(a types.Application) table.Row {
-	return table.Row{
-		a.Company,
-		a.Position,
-		a.Location,
-		a.DatePosted,
-		a.DateApplied,
-		a.Url,
-		a.Notes,
-		a.Status,
 	}
 }
